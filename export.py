@@ -497,6 +497,8 @@ def run(
     warnings.filterwarnings(action='ignore', category=torch.jit.TracerWarning)  # suppress TracerWarning
     if jit:
         f[0], _ = export_torchscript(model, im, file, optimize)
+    if engine:  # TensorRT required before ONNX
+        f[1], _ = export_engine(model, im, file, half, dynamic, simplify, workspace, verbose)
     if onnx or xml:  # OpenVINO requires ONNX
         f[2], _ = export_onnx(model, im, file, opset, train, dynamic, simplify)
     if xml:  # OpenVINO
