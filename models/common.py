@@ -322,7 +322,7 @@ class DetectMultiBackend(nn.Module):
 
         super().__init__()
         w = str(weights[0] if isinstance(weights, list) else weights)
-        pt, jit, onnx, xml = self._model_type(w)  # get backend
+        pt, jit, onnx, xml, engine, coreml, saved_model, pb = self._model_type(w)  # get backend
         w = attempt_download(w)  # download if not local
         fp16 &= pt or jit or onnx or engine  # FP16
         stride = 32  # default stride
@@ -542,8 +542,10 @@ class DetectMultiBackend(nn.Module):
         suffixes = list(export_formats().Suffix) + ['.xml']  # export suffixes
         check_suffix(p, suffixes)  # checks
         p = Path(p).name  # eliminate trailing separators
-        pt, jit, onnx, xml = (s in p for s in suffixes)
-        return pt, jit, onnx, xml
+        pt, jit, onnx, xml, engine, coreml, saved_model, pb = (s in p for s in suffixes)
+        xml |= xml2  # *_openvino_model or *.xml
+        tflite &= not edgetpu  # *.tflite
+        return pt, jit, onnx, xml, engine, coreml, saved_model, pb
 
     @staticmethod
     def _load_metadata(f='path/to/meta.yaml'):

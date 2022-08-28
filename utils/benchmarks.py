@@ -60,19 +60,31 @@ def run(
     y, t = [], time.time()
     device = select_device(device)
     for i, (name, f, suffix, cpu, gpu) in export.export_formats().iterrows():  # index, (name, file, suffix, CPU, GPU)
+        try:
+            assert i not in (9, 10), 'inference not supported'  # Edge TPU and TF.js are unsupported
+            assert i != 5 or platform.system() == 'Darwin', 'inference only supported on macOS>=10.13'  # CoreML
+            if 'cpu' in device.type:
+                assert cpu, 'inference not supported on CPU'
+            if 'cuda' in device.type:
+                assert gpu, 'inference not supported on GPU'
 
-        # Export
-        if f == '-':
-            w = weights  # PyTorch format
-        else:
-            w = export.run(weights=weights, imgsz=[imgsz], include=[f], device=device, half=half)[-1]  # all others
-        assert suffix in str(w), 'export failed'
+            # Export
+            if f == '-':
+                w = weights  # PyTorch format
+            else:
+                w = export.run(weights=weights, imgsz=[imgsz], include=[f], device=device, half=half)[-1]  # all others
+            assert suffix in str(w), 'export failed'
 
-        # Validate
-        result = val.run(data, w, batch_size, imgsz, plots=False, device=device, task='benchmark', half=half)
-        metrics = result[0]  # metrics (mp, mr, map50, map, *losses(box, obj, cls))
-        speeds = result[2]  # times (preprocess, inference, postprocess)
-        y.append([name, round(file_size(w), 1), round(metrics[3], 4), round(speeds[1], 2)])  # MB, mAP, t_inference
+            # Validate
+            result = val.run(data, w, batch_size, imgsz, plots=False, device=device, task='benchmark', half=half)
+            metrics = result[0]  # metrics (mp, mr, map50, map, *losses(box, obj, cls))
+            speeds = result[2]  # times (preprocess, inference, postprocess)
+            y.append([name, round(file_size(w), 1), round(metrics[3], 4), round(speeds[1], 2)])  # MB, mAP, t_inference
+        except Exception as e:
+            if hard_fail:
+                assert type(e) is AssertionError, f'Benchmark --hard-fail for {name}: {e}'
+            LOGGER.warning(f'WARNING: Benchmark failure for {name}: {e}')
+            y.append([name, None, None, None])  # mAP, t_inference
         if pt_only and i == 0:
             break  # break after PyTorch
 
