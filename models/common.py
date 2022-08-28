@@ -546,7 +546,7 @@ class DetectMultiBackend(nn.Module):
         pt, jit, onnx, xml, engine, coreml, xml2 = (s in p for s in suffixes)
 
         xml |= xml2  # *_openvino_model or *.xml
-        tflite &= not edgetpu  # *.tflite
+        # tflite &= not edgetpu  # *.tflite
         # return pt, jit, onnx, xml, engine, coreml, saved_model, pb, tflite, edgetpu, tfjs
         return pt, jit, onnx, xml, engine, coreml
     @staticmethod
