@@ -525,29 +525,29 @@ def run(
         f[4], _ = export_coreml(model, im, file, int8, half)
 
     # TensorFlow Exports
-    if any((saved_model, pb, tflite, edgetpu, tfjs)):
-        if int8 or edgetpu:  # TFLite --int8 bug https://github.com/ultralytics/yolov5/issues/5707
-            check_requirements(('flatbuffers==1.12',))  # required before `import tensorflow`
-        assert not tflite or not tfjs, 'TFLite and TF.js models must be exported separately, please pass only one type.'
-        f[5], model = export_saved_model(model.cpu(),
-                                         im,
-                                         file,
-                                         dynamic,
-                                         tf_nms=nms or agnostic_nms or tfjs,
-                                         agnostic_nms=agnostic_nms or tfjs,
-                                         topk_per_class=topk_per_class,
-                                         topk_all=topk_all,
-                                         iou_thres=iou_thres,
-                                         conf_thres=conf_thres,
-                                         keras=keras)
-        if pb or tfjs:  # pb prerequisite to tfjs
-            f[6], _ = export_pb(model, file)
-        if tflite or edgetpu:
-            f[7], _ = export_tflite(model, im, file, int8 or edgetpu, data=data, nms=nms, agnostic_nms=agnostic_nms)
-        if edgetpu:
-            f[8], _ = export_edgetpu(file)
-        if tfjs:
-            f[9], _ = export_tfjs(file)
+    # if any((saved_model, pb, tflite, edgetpu, tfjs)):
+    #     if int8 or edgetpu:  # TFLite --int8 bug https://github.com/ultralytics/yolov5/issues/5707
+    #         check_requirements(('flatbuffers==1.12',))  # required before `import tensorflow`
+    #     assert not tflite or not tfjs, 'TFLite and TF.js models must be exported separately, please pass only one type.'
+    #     f[5], model = export_saved_model(model.cpu(),
+    #                                      im,
+    #                                      file,
+    #                                      dynamic,
+    #                                      tf_nms=nms or agnostic_nms or tfjs,
+    #                                      agnostic_nms=agnostic_nms or tfjs,
+    #                                      topk_per_class=topk_per_class,
+    #                                      topk_all=topk_all,
+    #                                      iou_thres=iou_thres,
+    #                                      conf_thres=conf_thres,
+    #                                      keras=keras)
+    #     if pb or tfjs:  # pb prerequisite to tfjs
+    #         f[6], _ = export_pb(model, file)
+    #     if tflite or edgetpu:
+    #         f[7], _ = export_tflite(model, im, file, int8 or edgetpu, data=data, nms=nms, agnostic_nms=agnostic_nms)
+    #     if edgetpu:
+    #         f[8], _ = export_edgetpu(file)
+    #     if tfjs:
+    #         f[9], _ = export_tfjs(file)
 
     # Finish
     f = [str(x) for x in f if x]  # filter out '' and None
