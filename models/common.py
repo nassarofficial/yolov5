@@ -305,7 +305,7 @@ class Concat(nn.Module):
 
 class DetectMultiBackend(nn.Module):
     # YOLOv5 MultiBackend class for python inference on various backends
-    def __init__(self, weights='yolov5s.pt', device=torch.device('cpu'), dnn=False, data=None, fp16=False, fuse=True, num_threads=num_threads):
+    def __init__(self, weights='yolov5s.pt', device=torch.device('cpu'), dnn=False, data=None, fp16=False, fuse=True, num_threads=2):
         # Usage:
         #   PyTorch:              weights = *.pt
         #   TorchScript:                    *.torchscript
