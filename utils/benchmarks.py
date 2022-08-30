@@ -138,7 +138,7 @@ def parse_opt():
     parser.add_argument('--test', action='store_true', help='test exports only')
     parser.add_argument('--pt-only', action='store_true', help='test PyTorch only')
     parser.add_argument('--hard-fail', action='store_true', help='throw error on benchmark failure')
-    parser.add_argument('--num-threads', action='store_true', help='throw error on benchmark failure')
+    parser.add_argument('--num-threads', type=int, default=2, help='number of threads')
 
     opt = parser.parse_args()
     opt.data = check_yaml(opt.data)  # check YAML
