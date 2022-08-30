@@ -10,7 +10,7 @@ import warnings
 from collections import OrderedDict, namedtuple
 from copy import copy
 from pathlib import Path
-
+import os
 import cv2
 import numpy as np
 import pandas as pd
@@ -305,7 +305,7 @@ class Concat(nn.Module):
 
 class DetectMultiBackend(nn.Module):
     # YOLOv5 MultiBackend class for python inference on various backends
-    def __init__(self, weights='yolov5s.pt', device=torch.device('cpu'), dnn=False, data=None, fp16=False, fuse=True):
+    def __init__(self, weights='yolov5s.pt', device=torch.device('cpu'), dnn=False, data=None, fp16=False, fuse=True, num_threads=num_threads):
         # Usage:
         #   PyTorch:              weights = *.pt
         #   TorchScript:                    *.torchscript
@@ -351,9 +351,13 @@ class DetectMultiBackend(nn.Module):
             LOGGER.info(f'Loading {w} for ONNX Runtime inference...')
             cuda = torch.cuda.is_available() and device.type != 'cpu'
             check_requirements(('onnx', 'onnxruntime-gpu' if cuda else 'onnxruntime'))
+            os.environ['OMP_NUM_THREADS'] = str(num_threads)
             import onnxruntime
             providers = ['CUDAExecutionProvider', 'CPUExecutionProvider'] if cuda else ['CPUExecutionProvider']
-            session = onnxruntime.InferenceSession(w, providers=providers)
+            opts = onnxruntime.SessionOptions()
+            opts.inter_op_num_threads = num_threads
+            opts.intra_op_num_threads = num_threads
+            session = onnxruntime.InferenceSession(w, providers=providers, sess_options=opts)
             meta = session.get_modelmeta().custom_metadata_map  # metadata
             if 'stride' in meta:
                 stride, names = int(meta['stride']), eval(meta['names'])
@@ -370,7 +374,7 @@ class DetectMultiBackend(nn.Module):
             batch_dim = get_batch(network)
             if batch_dim.is_static:
                 batch_size = batch_dim.get_length()
-            executable_network = ie.compile_model(network, device_name="CPU")  # device_name="MYRIAD" for Intel NCS2
+            executable_network = ie.compile_model(network, device_name="CPU", config={"INFERENCE_NUM_THREADS": str(num_threads)})  # device_name="MYRIAD" for Intel NCS2
             output_layer = next(iter(executable_network.outputs))
             meta = Path(w).with_suffix('.yaml')
             if meta.exists():

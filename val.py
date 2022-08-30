@@ -122,6 +122,7 @@ def run(
         plots=True,
         callbacks=Callbacks(),
         compute_loss=None,
+        num_threads=num_threads,
 ):
     # Initialize/load model and set device
     training = model is not None
@@ -137,7 +138,7 @@ def run(
         (save_dir / 'labels' if save_txt else save_dir).mkdir(parents=True, exist_ok=True)  # make dir
 
         # Load model
-        model = DetectMultiBackend(weights, device=device, dnn=dnn, data=data, fp16=half)
+        model = DetectMultiBackend(weights, device=device, dnn=dnn, data=data, fp16=half, num_threads=num_threads)
         stride, pt, jit, engine = model.stride, model.pt, model.jit, model.engine
         imgsz = check_img_size(imgsz, s=stride)  # check image size
         half = model.fp16  # FP16 supported on limited backends with CUDA
@@ -351,6 +352,8 @@ def parse_opt():
     parser.add_argument('--exist-ok', action='store_true', help='existing project/name ok, do not increment')
     parser.add_argument('--half', action='store_true', help='use FP16 half-precision inference')
     parser.add_argument('--dnn', action='store_true', help='use OpenCV DNN for ONNX inference')
+    parser.add_argument('--num_threads', type=int, default=2, help='num threads')
+    num_threads
     opt = parser.parse_args()
     opt.data = check_yaml(opt.data)  # check YAML
     opt.save_json |= opt.data.endswith('coco.yaml')
